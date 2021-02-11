@@ -12,57 +12,113 @@ from app.routers.user import get_all_user_events
 def get_events_per_dates(
         session: Session,
         user_id: int,
-        start: Optional[date],
-        end: Optional[date]
-) -> Union[Iterator[Event], list]:
-    """Read from the db. Return a list of all
-    the user events between the relevant dates."""
+        start: date,
+        end: date,
+) -> Union[Iterator[Event], List]:
+    """Returns a list of all the user events between the relevant dates.
 
-    if start > end:
+    Retrieves event data from the database.
+
+    Args:
+        session: The database connection.
+        user_id: The user ID of the user whose events are returned.
+        start: The start of the date range.
+        end: The end of the date range.
+
+    Yields:
+        An Iterator of Event objects, or an empty list
+        if required parameters are not present.
+
+    """
+    if not session or not user_id or not start or not end or start > end:
         return []
 
     return (
-        filter_dates(
-            sort_by_date(
-                get_all_user_events(session, user_id)
-            ),
+        _get_filtered_events(
+            sort_by_date(get_all_user_events(session, user_id)),
             start,
             end,
         )
     )
 
 
-def build_arrow_delta_granularity(diff: timedelta) -> List[str]:
-    """Builds the granularity for the arrow module string"""
-    granularity = []
-    if diff.days > 0:
+def get_event_duration(event: Event) -> Optional[str]:
+    """Returns the event's duration.
+
+    Args:
+        event: An Event.
+
+    Returns:
+        The duration of the event in a string format,
+        or None if no Event is passed. For
+        example:
+
+        "2 days"
+        "2 days 2 hours and 30 minutes"
+
+    """
+    if not event:
+        return None
+
+    start = arrow.get(event.start)
+    end = arrow.get(event.end)
+    delta = event.end - event.start
+    duration = end.humanize(
+        start, only_distance=True, granularity=_get_delta_granularity(delta)
+    )
+    return duration
+
+
+def _get_delta_granularity(delta: timedelta) -> List[str]:
+    """Returns the delta granularity.
+
+    Builds the granularity for the arrow module string by calculating the delta
+    and returning a list of the time points: "day", "hour" and "minute".
+
+    Args:
+        delta: The timedelta between the end and starting time points.
+
+    Returns:
+        A list of the time point names.
+
+    """
+    granularity: List[str] = []
+
+    if not delta:
+        return granularity
+
+    if delta.days > 0:
         granularity.append("day")
-    hours, remainder = divmod(diff.seconds, 60 * 60)
+
+    hours, remainder = divmod(delta.seconds, 60 * 60)
+
     if hours > 0:
         granularity.append("hour")
+
     minutes, _ = divmod(remainder, 60)
+
     if minutes > 0:
         granularity.append("minute")
+
     return granularity
 
 
-def get_time_delta_string(start: date, end: date) -> str:
-    """Builds a string of the event's duration- days, hours and minutes."""
-    arrow_start = arrow.get(start)
-    arrow_end = arrow.get(end)
-    diff = end - start
-    granularity = build_arrow_delta_granularity(diff)
-    duration_string = arrow_end.humanize(
-        arrow_start, only_distance=True, granularity=granularity
-    )
-    return duration_string
+def _get_filtered_events(events: List[Event], start: date, end: date
+                         ) -> Iterator[Event]:
+    """Yields Events after filtering them by the requested date date.
 
+    Yields Events which have a starting date set between the
+    requested date range.
 
-def filter_dates(
-        events: List[Event], start: Optional[date],
-        end: Optional[date]) -> Iterator[Event]:
-    """filter events by a time frame."""
+    Args:
+        events: A lit of Events.
+        start: The start of the date range.
+        end: The end of the date range.
 
+    Yields:
+        Events which satisfy the requested date range.
+
+    """
     yield from (
         event for event in events
         if start <= event.start.date() <= end

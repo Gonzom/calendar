@@ -3,7 +3,6 @@ from typing import Any, Dict
 from sqlalchemy.orm import Session
 
 from app.database.models import Base, User
-from app.routers.profile import get_placeholder_user
 
 
 def save(session: Session, instance: Base) -> bool:
@@ -42,3 +41,17 @@ def get_current_user(session: Session) -> User:
         user = session.query(User).first()
 
     return user
+
+
+def get_placeholder_user() -> User:
+    """Returns a dummy User object."""
+    return User(
+        id=1,
+        username='new_user',
+        email='my@email.po',
+        password='1a2s3d4f5g6',
+        full_name='My Name',
+        language_id=1,
+        telegram_id='',
+        language='english',
+    )

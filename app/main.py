@@ -1,5 +1,7 @@
 from fastapi import Depends, FastAPI, Request
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm import Session
 
 from app import config
@@ -10,7 +12,13 @@ from app.internal.languages import set_ui_language
 from app.routers.salary import routes as salary
 
 
-def create_tables(engine, psql_environment):
+def create_tables(database_engine: Engine, psql_environment: bool) -> None:
+    """Creates the database tables on initialization.
+
+    Args:
+        database_engine: An Engine which will use for connection resources.
+        psql_environment: A flag stating if working on a PSQL environment.
+    """
     if 'sqlite' in str(engine.url) and psql_environment:
         raise models.PSQLEnvironmentError(
             "You're trying to use PSQL features on SQLite env.\n"
@@ -18,7 +26,7 @@ def create_tables(engine, psql_environment):
             "and run the app again."
         )
     else:
-        models.Base.metadata.create_all(bind=engine)
+        models.Base.metadata.create_all(bind=database_engine)
 
 
 create_tables(engine, config.PSQL_ENVIRONMENT)
@@ -59,11 +67,21 @@ for router in routers_to_include:
     app.include_router(router)
 
 
-# TODO: I add the quote day to the home page
-# until the relevant calendar view will be developed.
 @app.get("/")
 @logger.catch()
-async def home(request: Request, db: Session = Depends(get_db)):
+async def home(request: Request, db: Session = Depends(get_db)) -> Response:
+    """Returns the Home page route.
+
+    TODO: Quote of the day is currently placed here until a relevant calendar
+     view will be developed.
+    Args:
+        request: The HTTP request.
+        db: Optional; The database connection.
+
+    Returns:
+        The Home HTML page.
+
+    """
     quote = daily_quotes.quote_per_day(db)
     return templates.TemplateResponse("home.html", {
         "request": request,
