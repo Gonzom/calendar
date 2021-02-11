@@ -9,8 +9,10 @@ from app.routers.categories import _get_user_categories, _is_query_params_valid
 
 
 class TestCategories:
+
     CATEGORY_ALREADY_EXISTS_MSG = "The category already exists for user"
     ILLEGAL_PARAMS = "contains illegal parameters"
+    BAD_COLOR_FORMAT = "if not from expected format"
 
     @staticmethod
     def test_get_categories_logic_succeeded(session, user, category):
@@ -48,6 +50,14 @@ class TestCategories:
                 response.json()["detail"])
 
     @staticmethod
+    def test_creating_new_category_bad_color_format(client, user):
+        response = client.post("/categories/",
+                               json={"user_id": user.id, "name": "Foo",
+                                     "color": "bad format"})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert TestCategories.BAD_COLOR_FORMAT in response.json()["detail"]
+
+    @staticmethod
     def test_create_event_with_category(category):
         event = Event(
             title="OOO",
@@ -70,6 +80,7 @@ class TestCategories:
         response = client.get(f"/categories/?user_id={category.user_id}"
                               f"&name={category.name}&color={category.color}")
         assert response.ok
+        assert len(response.json()) == 1
         assert set(response.json()[0].items()) == {
             ("user_id", category.user_id),
             ("color", "121212"),
@@ -82,7 +93,7 @@ class TestCategories:
         response = client.get(f"/categories/?user_id={category.user_id}"
                               f"&name={category.name}")
         assert response.ok
-        print(category)
+        assert len(response.json()) == 1
         assert set(response.json()[0].items()) == {
             ("user_id", category.user_id),
             ("color", "121212"),
@@ -95,6 +106,7 @@ class TestCategories:
         response = client.get(f"/categories/?user_id={category.user_id}&"
                               f"color={category.color}")
         assert response.ok
+        assert len(response.json()) == 1
         assert set(response.json()[0].items()) == {
             ("user_id", category.user_id),
             ("color", "121212"),
@@ -122,17 +134,29 @@ class TestCategories:
     @staticmethod
     @pytest.mark.parametrize('params, expected_result', [
         (ImmutableMultiDict([('user_id', ''), ('name', ''),
-                             ('color', '')]), True),
+                             ('color', 'aabbcc')]), True),
         (ImmutableMultiDict([('user_id', ''), ('name', '')]), True),
-        (ImmutableMultiDict([('user_id', ''), ('color', '')]), True),
+        (ImmutableMultiDict([('user_id', ''), ('color', 'aabbcc')]), True),
         (ImmutableMultiDict([('user_id', '')]), True),
-        (ImmutableMultiDict([('name', ''), ('color', '')]), False),
+        (ImmutableMultiDict([('name', ''), ('color', 'aabbcc')]), False),
         (ImmutableMultiDict([]), False),
-        (ImmutableMultiDict([('user_id', ''), ('name', ''), ('color', ''),
-                             ('bad_param', '')]), False),
+        (ImmutableMultiDict([('user_id', ''), ('name', ''),
+                             ('color', 'aabbcc'), ('bad_param', '')]), False),
     ])
     def test_validate_request_params(params, expected_result):
         assert _is_query_params_valid(params) == expected_result
+
+    @staticmethod
+    @pytest.mark.parametrize('color, expected_result', [
+        ("aabbcc", True),
+        ("110033", True),
+        ("114b33", True),
+        ("", False),
+        ("aabbcg", False),
+        ("aabbc", False),
+    ])
+    def test_validate_color_format(color, expected_result):
+        assert validate_color_format(color) == expected_result
 
     @staticmethod
     def test_get_categories_failed(session):
