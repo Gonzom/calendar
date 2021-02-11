@@ -5,14 +5,15 @@ from sqlalchemy.testing import mock
 from starlette.datastructures import ImmutableMultiDict
 
 from app.database.models import Event
-from app.routers.categories import _get_user_categories, _is_query_params_valid
+from app.routers.categories import (
+    _get_user_categories, _is_color_format_valid, _is_query_params_valid
+)
 
 
 class TestCategories:
-
     CATEGORY_ALREADY_EXISTS_MSG = "The category already exists for user"
     ILLEGAL_PARAMS = "contains illegal parameters"
-    BAD_COLOR_FORMAT = "if not from expected format"
+    BAD_COLOR_FORMAT = "is not in a valid format"
 
     @staticmethod
     def test_get_categories_logic_succeeded(session, user, category):
@@ -51,9 +52,14 @@ class TestCategories:
 
     @staticmethod
     def test_creating_new_category_bad_color_format(client, user):
-        response = client.post("/categories/",
-                               json={"user_id": user.id, "name": "Foo",
-                                     "color": "bad format"})
+        response = client.post(
+            "/categories/",
+            json={
+                "user_id": user.id,
+                "name": "Foo",
+                "color": "bad format",
+            }
+        )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert TestCategories.BAD_COLOR_FORMAT in response.json()["detail"]
 
@@ -111,7 +117,7 @@ class TestCategories:
             ("user_id", category.user_id),
             ("color", "121212"),
             ("name", "Guitar Lesson"),
-            ("id", category.id)
+            ("id", category.id),
         }
 
     @staticmethod
@@ -156,7 +162,7 @@ class TestCategories:
         ("aabbc", False),
     ])
     def test_validate_color_format(color, expected_result):
-        assert validate_color_format(color) == expected_result
+        assert _is_color_format_valid(color) == expected_result
 
     @staticmethod
     def test_get_categories_failed(session):

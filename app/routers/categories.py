@@ -81,13 +81,17 @@ async def set_category(category: CategoryModel,
         A dict with the category_entry attributes.
 
     Raises:
-        HTTPException: If the category already exists for the user.
+        HTTPException: If the category already exists for the user,
+        or if the color is not in a valid format.
 
     """
-    if not validate_color_format(category.color):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Color {category.color} if not from "
-                                   f"expected format.")
+    if not _is_color_format_valid(category.color):
+        message = _("Color {color} is not in a valid format.")
+        message = message.format(color=category.color)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message,
+        )
     try:
         category_entry = Category.create(
             db,
@@ -110,10 +114,11 @@ async def set_category(category: CategoryModel,
 def _is_query_params_valid(query_params: ImmutableMultiDict) -> bool:
     """Checks if the request.query_params is valid or not.
 
-    request.query_params must contain user_id and can contain
+    The request.query_params must contain user_id and can contain
     also the fields name and color.
     Intersection must contain at least user_id.
     Union must not contain fields other than user_id, name, color.
+    color must be valid.
 
     Args:
         query_params: The request.query_params
@@ -121,21 +126,32 @@ def _is_query_params_valid(query_params: ImmutableMultiDict) -> bool:
     Returns:
         True if the query_params pass the described validation,
         False otherwise.
+
     """
     is_valid_color = True
     all_fields = set(CategoryModel.schema()["required"])
     request_params = set(query_params)
     union_set = request_params.union(all_fields)
     intersection_set = request_params.intersection(all_fields)
+
     if "color" in intersection_set:
-        is_valid_color = validate_color_format(query_params["color"])
-    return union_set == all_fields and "user_id" in intersection_set and (
-        is_valid_color)
+        is_valid_color = _is_color_format_valid(query_params["color"])
+
+    return (union_set == all_fields
+            and "user_id" in intersection_set
+            and is_valid_color
+            )
 
 
-def validate_color_format(color: str) -> bool:
-    """
-    Validate color is from hex format (without `#`).
+def _is_color_format_valid(color: str) -> bool:
+    """Checks if the color is from a valid hex format (without `#`).
+
+    Args:
+        color: A hex color.
+
+    Returns:
+        True if the color is valid, False otherwise.
+
     """
     if color:
         return re.fullmatch(HEX_COLOR_FORMAT, color) is not None
@@ -158,9 +174,9 @@ def _get_user_categories(db: Session,
     try:
         categories = (
             db.query(Category)
-                .filter_by(user_id=user_id)
-                .filter_by(**params)
-                .all()
+            .filter_by(user_id=user_id)
+            .filter_by(**params)
+            .all()
         )
     except SQLAlchemyError:
         return []
