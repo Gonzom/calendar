@@ -10,19 +10,19 @@ from app.routers.salary import routes as salary
 from tests.conftest import get_test_db, test_engine
 
 
-def get_test_placeholder_user() -> Iterator[User]:
+def get_test_placeholder_user() -> User:
     return User(
         username='fake_user',
         email='fake@mail.fake',
         password='123456fake',
         full_name='FakeName',
         language_id=1,
-        telegram_id='666666'
+        telegram_id='666666',
     )
 
 
 @pytest.fixture(scope="session")
-def client() -> Iterator[TestClient]:
+def client() -> TestClient:
     return TestClient(main.app)
 
 

@@ -29,7 +29,7 @@
 </div>
 <script type="text/javascript" src="{{ url_for('static', path='/currency.js') }}"></script>
 <script type="text/javascript">
-  getCurrency("{{ base | safe }}", "{{ date | safe }}");
+  getCurrency("{{ currency | safe }}", "{{ date | safe }}");
   document.getElementById("currencyView").addEventListener("click", function (e) {
     if (e.target && e.target.nodeName == "A") {
       getCurrency(e.target.id, "{{ date | safe }}");

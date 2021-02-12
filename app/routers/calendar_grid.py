@@ -1,5 +1,5 @@
 from calendar import Calendar, day_name
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 import itertools
 import locale
 from typing import Dict, Iterator, List, Sequence, Tuple
@@ -28,6 +28,7 @@ class Day:
         events: List of tuples representing a timed event in the format of:
             [("09AP", "Meeting with yam")]
         css: The day's CSS styling.
+
     """
 
     def __init__(self, date_of_day: datetime):
@@ -331,7 +332,8 @@ def _get_first_day_month_block(calendar_date: datetime) -> datetime:
     """
     month = list(Calendar().itermonthdates(
         calendar_date.year, calendar_date.month))
-    return month[0]
+
+    return datetime.combine(month[0], time.min)
 
 
 # TODO: is this used other than in a test?

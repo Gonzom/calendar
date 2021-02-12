@@ -63,10 +63,9 @@ class TestCalendarGrid:
 
     @staticmethod
     def test_get_first_day_month_block(calendar_fixture):
-        assert (
-                cg._get_first_day_month_block(DATE)
-                == next(calendar_fixture.itermonthdates(DATE.year, DATE.month))
-        )
+        first_day = next(
+            calendar_fixture.itermonthdates(DATE.year, DATE.month))
+        assert cg._get_first_day_month_block(DATE).date() == first_day
 
     @staticmethod
     def test_get_days_from_date():
@@ -90,7 +89,8 @@ class TestCalendarGrid:
 
         for i in range(len(month_weeks)):
             for j in range(cg.Week.WEEK_DAYS):
-                assert get_block[i].days[j].date == month_weeks[i].days[j]
+                day = month_weeks[i].days[j]
+                assert get_block[i].days[j].date.date() == day
 
     @staticmethod
     def test_get_user_local_time():
