@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.database.models import Event, User
 from app.dependencies import get_db, logger, templates
 from app.internal import zodiac
-from app.internal.utils import get_placeholder_user
+from app.internal.utils import get_current_user
 
 router = APIRouter()
 
@@ -213,7 +213,7 @@ async def day_view(request: Request, date: str, db: Session = Depends(get_db)
 
     """
     # TODO: add a login session
-    user = db.query(User).filter_by(id=get_placeholder_user().id).first()
+    user = db.query(User).filter_by(id=get_current_user(db).id).first()
     try:
         selected_datetime = datetime.strptime(date, '%Y-%m-%d')
     except ValueError as error:
@@ -226,14 +226,14 @@ async def day_view(request: Request, date: str, db: Session = Depends(get_db)
     events = (
         db.query(Event)
         .filter(Event.owner_id == user.id)
-        .filter(
-            or_(
-                and_(Event.start >= selected_datetime, Event.start < day_end),
-                (Event.end >= selected_datetime, Event.end < day_end),
-                and_(Event.start < day_end, day_end < Event.end),
+        .filter(or_(
+            and_(Event.start >= selected_datetime, Event.start < day_end),
+            and_(Event.end >= selected_datetime, Event.end < day_end),
+            and_(Event.start < day_end, day_end < Event.end),
             )
         )
     )
+
     events_n_attrs = [(event, DivAttributes(event, selected_datetime)) for
                       event in events]
     zodiac_sign = zodiac.get_zodiac_of_day(db, selected_datetime)

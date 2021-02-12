@@ -73,14 +73,14 @@ def get_events(dates: List[Tuple[datetime, datetime]], user_id: int
         A list of Events.
     """
     events = []
-    for i, (start, end) in enumerate(dates):
+    for start, end in dates:
         event = get_dummy_event(start, end, user_id)
         events.append(event)
     return events
 
 
 @pytest.fixture
-def event() -> Event:
+def event1() -> Event:
     """Returns an Event fixture."""
     start = datetime(year=2021, month=2, day=1, hour=7, minute=5)
     end = datetime(year=2021, month=2, day=1, hour=9, minute=15)
@@ -98,8 +98,8 @@ def multiday_event() -> Event:
 class TestDivAttributes:
 
     @staticmethod
-    def test_div_attributes(event):
-        div_attr = DivAttributes(event)
+    def test_div_attributes(event1):
+        div_attr = DivAttributes(event1)
         assert div_attr.total_time == '07:05 - 09:15'
         assert div_attr.grid_position == '34 / 42'
         assert div_attr.length == 130
@@ -111,9 +111,9 @@ class TestDivAttributes:
         assert DivAttributes._get_quarter_hour_position(minutes) == result
 
     @staticmethod
-    def test_div_attributes_with_costume_color(event):
-        event.color = 'blue'
-        div_attr = DivAttributes(event)
+    def test_div_attributes_with_costume_color(event1):
+        event1.color = 'blue'
+        div_attr = DivAttributes(event1)
         assert div_attr.color == 'blue'
 
     @staticmethod
@@ -129,10 +129,10 @@ class TestDivAttributes:
 class TestDayView:
 
     @staticmethod
-    def test_day_view_html(event, session, user, client):
-        event.id = user.id
+    def test_day_view_html(session, user, event1, client):
+        event1.id = user.id
         events = get_events(EVENT_TIMES, user.id)
-        session.add_all([event, events[0], events[1]])
+        session.add_all([event1, events[0], events[1]])
         session.commit()
         response = client.get("/day/2021-2-1")
         soup = BeautifulSoup(response.content, 'html.parser')
