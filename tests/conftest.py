@@ -76,4 +76,4 @@ def sqlite_engine():
 
 @pytest.fixture
 def calendar_fixture():
-    return calendar.Calendar(0)
+    return calendar.Calendar()

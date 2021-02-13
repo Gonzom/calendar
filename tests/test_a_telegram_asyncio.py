@@ -45,14 +45,16 @@ def gen_callback(text):
                 'first_name': 'Moshe',
                 'username': 'banana',
                 'language_code': 'en'
-            }, 'message': {
+            },
+            'message': {
                 'message_id': 838,
                 'from': {
                     'id': 2566252,
                     'is_bot': True,
                     'first_name': 'PyLandar',
                     'username': 'pylander_bot'
-                }, 'chat': {
+                },
+                'chat': {
                     'id': 666666,
                     'first_name': 'Moshe',
                     'username': 'banana',

@@ -1,8 +1,11 @@
 class TestAssociation:
-    def test_association_data(self, association, event):
+
+    @staticmethod
+    def test_association_data(association, event):
         assert association.events == event
 
-    def test_repr(self, association):
+    @staticmethod
+    def test_repr(association):
         assert (
                 association.__repr__()
                 == f'<UserEvent ({association.participants}, '

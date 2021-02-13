@@ -38,27 +38,27 @@ def create_test_client(get_db_function) -> Iterator[TestClient]:
 
 
 @pytest.fixture(scope="session")
-def agenda_test_client() -> Iterator[TestClient]:
+def agenda_test_client() -> TestClient:
     yield from create_test_client(agenda.get_db)
 
 
 @pytest.fixture(scope="session")
-def event_test_client() -> Iterator[TestClient]:
+def event_test_client() -> TestClient:
     yield from create_test_client(event.get_db)
 
 
 @pytest.fixture(scope="session")
-def home_test_client() -> Iterator[TestClient]:
+def home_test_client() -> TestClient:
     yield from create_test_client(main.get_db)
 
 
 @pytest.fixture(scope="session")
-def invitation_test_client() -> Iterator[TestClient]:
+def invitation_test_client() -> TestClient:
     yield from create_test_client(invitation.get_db)
 
 
 @pytest.fixture(scope="session")
-def profile_test_client() -> Iterator[TestClient]:
+def profile_test_client() -> TestClient:
     Base.metadata.create_all(bind=test_engine)
     main.app.dependency_overrides[profile.get_db] = get_test_db
     main.app.dependency_overrides[
@@ -72,5 +72,5 @@ def profile_test_client() -> Iterator[TestClient]:
 
 
 @pytest.fixture(scope="session")
-def salary_test_client() -> Iterator[TestClient]:
+def salary_test_client() -> TestClient:
     yield from create_test_client(salary.get_db)
