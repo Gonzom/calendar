@@ -5,6 +5,7 @@ import pytest
 
 from app import main
 from app.database.models import Base, User
+from app.internal.utils import get_placeholder_user
 from app.routers import agenda, event, invitation, profile
 from app.routers.salary import routes as salary
 from tests.conftest import get_test_db, test_engine
@@ -62,7 +63,7 @@ def profile_test_client() -> TestClient:
     Base.metadata.create_all(bind=test_engine)
     main.app.dependency_overrides[profile.get_db] = get_test_db
     main.app.dependency_overrides[
-        profile.get_placeholder_user] = get_test_placeholder_user
+        get_placeholder_user] = get_test_placeholder_user
 
     with TestClient(main.app) as client:
         yield client

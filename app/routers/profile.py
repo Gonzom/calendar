@@ -13,6 +13,7 @@ from app.dependencies import get_db, MEDIA_PATH, templates
 from app.internal.on_this_day_events import get_on_this_day_events
 from app.internal.import_holidays import (get_holidays_from_file,
                                           save_holidays_to_db)
+from app.internal.utils import get_placeholder_user
 
 PICTURE_EXTENSION = config.PICTURE_EXTENSION
 PICTURE_SIZE = config.AVATAR_SIZE
@@ -22,17 +23,6 @@ router = APIRouter(
     tags=["profile"],
     responses={404: {"description": "Not found"}},
 )
-
-
-def get_placeholder_user():
-    return User(
-        username='new_user',
-        email='my@email.po',
-        password='1a2s3d4f5g6',
-        full_name='My Name',
-        language_id=1,
-        telegram_id='',
-    )
 
 
 @router.get("/")
