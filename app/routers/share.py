@@ -4,85 +4,110 @@ from sqlalchemy.orm import Session
 
 from app.database.models import Event, Invitation, UserEvent
 from app.internal.utils import save
-from app.routers.export import event_to_ical
 from app.routers.user import does_user_exist, get_users
 
 
-def sort_emails(
-        participants: List[str],
-        session: Session,
-) -> Dict[str, List[str]]:
-    """Sorts emails to registered and unregistered users."""
+def send_invitation(event: Event, emails: List[str], session: Session):
+    """Sends invitations to all event participants.
 
-    emails = {'registered': [], 'unregistered': []}  # type: ignore
-    for participant in participants:
+    Args:
+        event: The event the users are invited to.
+        emails: A list of the event's users' emails.
+        session: A database connection.
 
-        if does_user_exist(email=participant, session=session):
-            temp: list = emails['registered']
-        else:
-            temp: list = emails['unregistered']
+    Returns:
 
-        temp.append(participant)
+    """
+    registered, unregistered = (
+        _get_sorted_emails(emails, session=session).values()
+    )
 
-    return emails
-
-
-def send_email_invitation(
-        participants: List[str],
-        event: Event,
-) -> bool:
-    """Sends an email with an invitation."""
-
-    ical_invitation = event_to_ical(event, participants)  # noqa: F841
-    for _ in participants:
-        # TODO: send email
-        pass
-    return True
+    # _send_email_invitations(unregistered, event)
+    _send_in_app_invitations(registered, event, session)
 
 
-def send_in_app_invitation(
-        participants: List[str],
-        event: Event,
-        session: Session
-) -> bool:
-    """Sends an in-app invitation for registered users."""
+def accept_invitation(invitation: Invitation, session: Session) -> None:
+    """Adds a User to the Event and changes the invite status to 'accepted'.
 
-    for participant in participants:
-        # email is unique
-        recipient = get_users(email=participant, session=session)[0]
+    Accepting an invitation creates a new UserEvent entity with the User
+    and the Event IDs in the database.
 
-        if recipient.id != event.owner.id:
-            session.add(Invitation(recipient=recipient, event=event))
+    The Invitation is updated with the status changed to 'accepted'.
 
-        else:
-            # if user tries to send to themselves.
-            return False
-
-    session.commit()
-    return True
-
-
-def accept(invitation: Invitation, session: Session) -> None:
-    """Accepts an invitation by creating an
-    UserEvent association that represents
-    participantship at the event."""
-
+    Args:
+        invitation: The invitation sent.
+        session: A database connection.
+    """
     association = UserEvent(
         user_id=invitation.recipient.id,
-        event_id=invitation.event.id
+        event_id=invitation.event.id,
     )
     invitation.status = 'accepted'
     save(session, invitation)
     save(session, association)
 
 
-def share(event: Event, participants: List[str], session: Session) -> bool:
-    """Sends invitations to all event participants."""
+def _get_sorted_emails(emails: List[str], session: Session
+                       ) -> Dict[str, List[str]]:
+    """Returns a dictionary of emails sorted into groups.
 
-    registered, unregistered = (
-        sort_emails(participants, session=session).values()
-    )
-    if send_email_invitation(unregistered, event):
-        if send_in_app_invitation(registered, event, session):
-            return True
-    return False
+    Args:
+        emails: A list of the event's users' emails.
+        session: A database connection.
+
+    Returns:
+        A dictionary of emails sorted to registered and unregistered users.
+
+    """
+    sorted_emails: Dict[str, List[str]] = {
+        'registered': [],
+        'unregistered': [],
+    }
+
+    for email in emails:
+        if does_user_exist(email=email, session=session):
+            sorted_emails['registered'].append(email)
+        else:
+            sorted_emails['unregistered'].append(email)
+    return sorted_emails
+
+
+# TODO: comment out until function is working.
+# def _send_email_invitations(emails: List[str], event: Event) -> bool:
+#     """Sends email invitations to unregistered users.
+#
+#     Args:
+#         emails: A list of the event's users' emails.
+#         event: The event the users are invited to.
+#
+#     Returns:
+#
+#     """
+#     icalendar = event_to_icalendar(event, emails)
+#     for email in emails:
+#         # TODO: send email code here
+#         pass
+#     return True
+
+
+def _send_in_app_invitations(emails: List[str], event: Event, session: Session
+                             ) -> bool:
+    """Sends in-app invitations for registered users.
+
+    Args:
+        emails: A list of the event's users' emails.
+        event: The event the users are invited to.
+        session: A database connection.
+
+    Returns:
+
+    """
+    for email in emails:
+        # An email is unique.
+        user = get_users(email=email, session=session)[0]
+
+        if user.id != event.owner.id:
+            session.add(Invitation(recipient=user, event=event))
+
+    session.commit()
+    return True

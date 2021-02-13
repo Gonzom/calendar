@@ -1,40 +1,43 @@
 from icalendar import vCalAddress
 
 from app.config import ICAL_VERSION, PRODUCT_ID
-from app.routers.export import (
-    create_ical_calendar, create_ical_event, event_to_ical
-)
+from app.routers import export
 
 
 class TestExport:
 
-    def test_create_ical_calendar(self):
-        cal = create_ical_calendar()
+    @staticmethod
+    def test_create_icalendar():
+        cal = export._create_icalendar()
         assert cal.get('version') == ICAL_VERSION
         assert cal.get('prodid') == PRODUCT_ID
 
-    def test_create_ical_event(self, event):
-        ical_event = create_ical_event(event)
-        assert event.owner.email in ical_event.get('organizer')
-        assert ical_event.get('summary') == event.title
+    @staticmethod
+    def test_create_icalendar_event(event):
+        ievent = export._create_icalendar_event(event)
+        assert event.owner.email in ievent.get('organizer')
+        assert ievent.get('summary') == event.title
 
-    def test_add_attendees(self, event, user):
-        ical_event = create_ical_event(event)
-        ical_event.add(
-            'attendee',
-            vCalAddress(f'MAILTO:{user.email}'),
-            encode=0
-        )
-        attendee = vCalAddress(f'MAILTO:{user.email}')
-        assert attendee == ical_event.get('attendee')
+    @staticmethod
+    def test_add_attendees(event):
+        ievent = export._create_icalendar_event(event)
+        export._add_attendees(ievent, ["test1", "test2"])
+        assert len(ievent.get("attendee")) == 2
 
-    def test_event_to_ical(self, user, event):
-        ical_event = event_to_ical(event, [user.email])
+    @staticmethod
+    def test_get_v_cal_address():
+        email = "test_email"
+        attendee = export._get_v_cal_address(email)
+        test_attendee = vCalAddress(f'MAILTO:{email}')
+        assert attendee == test_attendee
+
+    @staticmethod
+    def test_event_to_icalendar(user, event):
+        ievent = export.event_to_icalendar(event, [user.email])
 
         def does_contain(item: str) -> bool:
             """Returns if calendar contains item."""
-
-            return bytes(item, encoding='utf8') in bytes(ical_event)
+            return bytes(item, encoding='utf8') in bytes(ievent)
 
         assert does_contain(ICAL_VERSION)
         assert does_contain(PRODUCT_ID)

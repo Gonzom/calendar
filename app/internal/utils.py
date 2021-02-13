@@ -53,5 +53,4 @@ def get_placeholder_user() -> User:
         full_name='My Name',
         language_id=1,
         telegram_id='',
-        language='english',
     )
