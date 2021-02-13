@@ -44,7 +44,7 @@ from app.routers import (  # noqa: E402
     email, event, invitation, profile, search, telegram, whatsapp
 )
 
-json_data_loader.load_to_db(next(get_db()))
+json_data_loader.load_json_data_to_database(next(get_db()))
 
 routers_to_include = [
     agenda.router,
@@ -82,7 +82,7 @@ async def home(request: Request, db: Session = Depends(get_db)) -> Response:
         The Home HTML page.
 
     """
-    quote = daily_quotes.quote_per_day(db)
+    quote = daily_quotes.get_quote_of_day(db)
     return templates.TemplateResponse("home.html", {
         "request": request,
         "quote": quote,

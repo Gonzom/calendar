@@ -6,33 +6,24 @@ from sqlalchemy.orm.session import Session
 from app.database.models import Event
 
 
-def get_stripped_keywords(keywords: str) -> str:
-    '''Gets a string of keywords to search for from the user form
-       and returns a stripped ready-to-db-search keywords string'''
+def get_results_by_keywords(session: Session, keywords: str, owner_id: int
+                            ) -> List[Event]:
+    """Returns a list of Events matching the search query.
 
-    keywords = " ".join(keywords.split())
-    keywords = keywords.replace(" ", ":* & ") + ":*"
-    return keywords
-
-
-def get_results_by_keywords(
-        session: Session,
-        keywords: str,
-        owner_id: int
-) -> List[Event]:
-    """Returns possible results for a search in the 'events' database table
+     The results are limited to Events owned by the current user.
+     Uses PostgreSQL's built in 'Full-text search' feature, and
+     doesn't work with SQLite.
 
     Args:
-        keywords (str): search string
-        owner_id (int): current user id
+        session: The database connection.
+        keywords: The search keywords.
+        owner_id: The current user ID.
 
     Returns:
-        list: a list of events from the database matching the inserted keywords
+        A list of Events matching the search query.
 
-    Uses PostgreSQL's built in 'Full-text search' feature
-    (doesn't work with SQLite)"""
-
-    keywords = get_stripped_keywords(keywords)
+    """
+    keywords = _get_stripped_keywords(keywords)
 
     try:
         return session.query(Event).filter(
@@ -41,3 +32,18 @@ def get_results_by_keywords(
 
     except (SQLAlchemyError, AttributeError):
         return []
+
+
+def _get_stripped_keywords(keywords: str) -> str:
+    """Returns a valid database search keywords string.
+
+    Args:
+        keywords: The search keywords.
+
+    Returns:
+        A valid database search keywords string.
+
+    """
+    keywords = " ".join(keywords.split())
+    keywords = keywords.replace(" ", ":* & ") + ":*"
+    return keywords
