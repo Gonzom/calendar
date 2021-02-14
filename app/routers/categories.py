@@ -172,12 +172,11 @@ def _get_user_categories(db: Session,
 
     """
     try:
-        categories = (
-            db.query(Category)
-            .filter_by(user_id=user_id)
-            .filter_by(**params)
-            .all()
-        )
+        categories = (db.query(Category)
+                      .filter_by(user_id=user_id)
+                      .filter_by(**params)
+                      .all()
+                      )
     except SQLAlchemyError:
         return []
     else:
