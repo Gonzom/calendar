@@ -34,7 +34,7 @@ def delete_instance(session: Session, instance: Base) -> None:
 def get_current_user(session: Session) -> User:
     """Mock function for current user information retrival."""
     # Code revision required after user login feature is added
-    new_user = get_placeholder_user()
+    new_user = get_placeholder_user(False)
     user = session.query(User).first()
     if not user:
         save(session, new_user)
@@ -43,10 +43,9 @@ def get_current_user(session: Session) -> User:
     return user
 
 
-def get_placeholder_user() -> User:
+def get_placeholder_user(add_id: bool = True) -> User:
     """Returns a dummy User object."""
-    return User(
-        id=1,
+    user = User(
         username='new_user',
         email='my@email.po',
         password='1a2s3d4f5g6',
@@ -54,3 +53,8 @@ def get_placeholder_user() -> User:
         language_id=1,
         telegram_id='',
     )
+
+    if add_id:
+        user.id = 1
+
+    return user

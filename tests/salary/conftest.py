@@ -50,6 +50,7 @@ def salary_user(salary_session: Session):
         username='test_username',
         password='test_password',
         email='test.email@gmail.com',
+        language_id=1,
     )
     yield test_user
     delete_instance(salary_session, test_user)

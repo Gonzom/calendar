@@ -3,13 +3,15 @@ import datetime
 
 import dateparser
 
+from app.config import Settings
 from app.database.models import User
 from app.dependencies import get_db
 from app.routers.event import create_event
 from .bot import telegram_bot
 from .keyboards import (
     DATE_FORMAT, field_kb, gen_inline_keyboard,
-    get_this_week_buttons, new_event_kb, show_events_kb)
+    get_this_week_buttons, new_event_kb, show_events_kb
+)
 from .models import Chat
 
 
@@ -17,12 +19,13 @@ class MessageHandler:
     def __init__(self, chat: Chat, user: User):
         self.chat = chat
         self.user = user
-        self.handlers = {}
-        self.handlers['/start'] = self.start_handler
-        self.handlers['/show_events'] = self.show_events_handler
-        self.handlers['/new_event'] = self.new_event_handler
-        self.handlers['Today'] = self.today_handler
-        self.handlers['This week'] = self.this_week_handler
+        self.handlers = {
+            '/start': self.start_handler,
+            '/show_events': self.show_events_handler,
+            '/new_event': self.new_event_handler,
+            'Today': self.today_handler,
+            'This week': self.this_week_handler,
+        }
 
         # Add next 6 days to handlers dict
         for row in get_this_week_buttons():
@@ -258,10 +261,10 @@ async def reply_unknown_user(chat):
     answer = f'''
 Hello, {chat.first_name}!
 
-To use PyLendar Bot you have to register
-your Telegram Id in your profile page.
+To use {Settings().app_name} Bot you have to register
+your Telegram ID in your profile page.
 
-Your Id is {chat.user_id}
+Your ID is {chat.user_id}
 Keep it secret!
 
 https://calendar.pythonic.guru/profile/

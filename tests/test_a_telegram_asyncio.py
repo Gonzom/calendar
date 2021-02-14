@@ -141,8 +141,8 @@ class TestBotClient:
             '/telegram/', json=gen_message('/start'))
         assert response.status_code == status.HTTP_200_OK
         assert b'Hello, Moshe!' in response.content
-        assert b'To use PyLendar Bot you have to register' \
-               in response.content
+        assert (b'To use PyLander Bot you have to register'
+                in response.content)
 
     @staticmethod
     @pytest.mark.asyncio
@@ -320,10 +320,10 @@ async def test_reply_unknown_user():
     assert answer == '''
 Hello, Moshe!
 
-To use PyLendar Bot you have to register
-your Telegram Id in your profile page.
+To use PyLander Bot you have to register
+your Telegram ID in your profile page.
 
-Your Id is 666666
+Your ID is 666666
 Keep it secret!
 
 https://calendar.pythonic.guru/profile/
